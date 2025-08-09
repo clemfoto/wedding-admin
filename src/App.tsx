@@ -217,7 +217,23 @@ function useSupabaseAuth() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => { sub?.subscription.unsubscribe(); };
   }, []);
-  const signIn = async (email: string) => { if (!supabase) return alert("Configura SUPABASE_URL y KEY"); const { error } = await supabase.auth.signInWithOtp({ email }); if (error) alert(error.message); else alert("Revisa tu correo para el Magic Link"); };
+  const signIn = async (email: string) => {
+  if (!supabase) return alert("Configura SUPABASE_URL y KEY");
+
+  const redirect =
+    import.meta.env.PROD
+      ? "https://wedding-admin.vercel.app"   // producción (Vercel)
+      : window.location.origin;               // dev (localhost o IP)
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: redirect }
+  });
+
+  if (error) alert(error.message);
+  else alert("Revisa tu correo para el Magic Link");
+};
+
   const signOut = async () => { await supabase?.auth.signOut(); };
   return { session, signIn, signOut };
 }
