@@ -217,16 +217,7 @@ function useSupabaseAuth() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => { sub?.subscription.unsubscribe(); };
   }, []);
-  const signIn = async (email: string) => {
-  if (!supabase) return alert("Configura SUPABASE_URL y KEY");
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin }
-  });
-  if (error) alert(error.message);
-  else alert("Revisa tu correo para el Magic Link");
-};
-
+  const signIn = async (email: string) => { if (!supabase) return alert("Configura SUPABASE_URL y KEY"); const { error } = await supabase.auth.signInWithOtp({ email }); if (error) alert(error.message); else alert("Revisa tu correo para el Magic Link"); };
   const signOut = async () => { await supabase?.auth.signOut(); };
   return { session, signIn, signOut };
 }
@@ -618,10 +609,23 @@ function RequestsModule({ state, setState }: { state: AppState; setState: (s: Ap
     try { await sbInsert<SpecialRequest>("special_requests", { ...item, owner_name: item.owner_name }); } catch (e:any) { alert(e.message); }
   };
   const toggle = async (id: string) => {
-    const updated = state.special_requests.map(r => r.request_id===id ? { ...r, status: r.status==='open'?'done':'open' } : r);
-    setState({ ...state, special_requests: updated });
-    try { const target = updated.find(r=>r.request_id===id)!; await sbUpdate<SpecialRequest>("special_requests", "request_id", target); } catch (e:any) { alert(e.message); }
-  };
+  const updated = state.special_requests.map(r =>
+    r.request_id === id
+      ? {
+          ...r,
+          status: (r.status === "open" ? "done" : "open") as SpecialRequest["status"],
+        }
+      : r
+  );
+  setState({ ...state, special_requests: updated });
+  try {
+    const target = updated.find(r => r.request_id === id)! as SpecialRequest;
+    await sbUpdate<SpecialRequest>("special_requests", "request_id", target);
+  } catch (e: any) {
+    alert(e.message);
+  }
+};
+
 
   return (
     <div className="grid md:grid-cols-3 gap-4">
@@ -684,10 +688,23 @@ function TasksModule({ state, setState }: { state: AppState; setState: (s: AppSt
     setForm({ task_id: "", title: "", status: "todo" });
   };
   const toggle = async (id: string) => {
-    const updated = state.tasks.map(t => t.task_id===id? { ...t, status: t.status==='done'?'todo':'done' } : t);
-    setState({ ...state, tasks: updated });
-    try { const target = updated.find(t=>t.task_id===id)!; await sbUpdate<Task>("tasks", "task_id", target); } catch (e:any) { alert(e.message); }
-  };
+  const updated = state.tasks.map(t =>
+    t.task_id === id
+      ? {
+          ...t,
+          status: (t.status === "done" ? "todo" : "done") as Task["status"],
+        }
+      : t
+  );
+  setState({ ...state, tasks: updated });
+  try {
+    const target = updated.find(t => t.task_id === id)! as Task;
+    await sbUpdate<Task>("tasks", "task_id", target);
+  } catch (e: any) {
+    alert(e.message);
+  }
+};
+
 
   const listTodo = state.tasks.filter(t=>t.status!=='done');
   const listDone = state.tasks.filter(t=>t.status==='done');
@@ -953,7 +970,7 @@ export default function App() {
           <div className="text-sm text-gray-600 mb-4">Escribe tu correo para recibir un Magic Link.</div>
           <Input type="email" placeholder="tu@email.com" onChange={(e)=>{ email = e.target.value }} />
           <div className="mt-3"><Button onClick={()=> (email? signIn(email): alert("Escribe tu correo"))}>Enviar Magic Link</Button></div>
-          <div className="text-xs text-gray-500 mt-3">Configura dominios permitidos en Auth &gt; URL</div>
+          <div className="text-xs text-gray-500 mt-3">Configura dominios permitidos en Auth > URL</div>
         </div>
       </div>
     );
