@@ -218,21 +218,23 @@ function useSupabaseAuth() {
     return () => { sub?.subscription.unsubscribe(); };
   }, []);
   const signIn = async (email: string) => {
-  if (!supabase) return alert("Configura SUPABASE_URL y KEY");
+  if (!supabase) {                 // ✅ evita el error "posiblemente null"
+    alert("Configura VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY");
+    return;
+  }
 
- const redirect =
-  import.meta.env.PROD
-    ? "https://wedding-admin-gamma.vercel.app"
-    : window.location.origin;
-           // dev (localhost o IP)
+  const redirectTo =
+    import.meta.env.PROD
+      ? "https://wedding-admin-gamma.vercel.app"   // ✅ tu dominio en Vercel
+      : window.location.origin;                    // dev (localhost/IP)
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: redirect }
+    options: { emailRedirectTo: redirectTo }
   });
 
-  if (error) alert(error.message);
-  else alert("Revisa tu correo para el Magic Link");
+  if (error) alert("No se pudo enviar el Magic Link: " + error.message);
+  else alert("Revisa tu correo para continuar el login.");
 };
 
   const signOut = async () => { await supabase?.auth.signOut(); };
