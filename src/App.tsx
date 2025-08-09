@@ -436,10 +436,23 @@ function PaymentsModule({ state, setState }: { state: AppState; setState: (s: Ap
     try { await sbInsert<Payment>("payments", item); } catch (e:any) { alert(e.message); }
   };
   const markPaid = async (id: string) => {
-    const updated = state.payments.map(p => p.payment_id === id ? { ...p, status: "paid", paid_date: todayISO() } : p);
-    setState({ ...state, payments: updated });
-    try { const target = updated.find(p=>p.payment_id===id)!; await sbUpdate<Payment>("payments", "payment_id", target); } catch (e:any) { alert(e.message); }
-  };
+  // ✅ Forzamos que el resultado del map sea Payment[]
+  const updated = state.payments.map<Payment>(p =>
+    p.payment_id === id
+      ? { ...p, status: "paid" as const, paid_date: todayISO() } // ✅ literal "paid"
+      : p
+  );
+
+  setState({ ...state, payments: updated });
+
+  try {
+    const target = updated.find(p => p.payment_id === id)!; // ya es Payment
+    await sbUpdate<Payment>("payments", "payment_id", target);
+  } catch (e: any) {
+    alert(e.message);
+  }
+};
+
   const remove = async (id: string) => {
     if (!confirm("¿Eliminar pago?")) return;
     setState({ ...state, payments: state.payments.filter(x => x.payment_id !== id) });
@@ -970,7 +983,9 @@ export default function App() {
           <div className="text-sm text-gray-600 mb-4">Escribe tu correo para recibir un Magic Link.</div>
           <Input type="email" placeholder="tu@email.com" onChange={(e)=>{ email = e.target.value }} />
           <div className="mt-3"><Button onClick={()=> (email? signIn(email): alert("Escribe tu correo"))}>Enviar Magic Link</Button></div>
-          <div className="text-xs text-gray-500 mt-3">Configura dominios permitidos en Auth > URL</div>
+          <div className="text-xs text-gray-500 mt-3">Configura dominios permitidos en Auth {'>'}
+
+ URL</div>
         </div>
       </div>
     );
