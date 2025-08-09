@@ -220,10 +220,11 @@ function useSupabaseAuth() {
   const signIn = async (email: string) => {
   if (!supabase) return alert("Configura SUPABASE_URL y KEY");
 
-  const redirect =
-    import.meta.env.PROD
-      ? "https://wedding-admin.vercel.app"   // producción (Vercel)
-      : window.location.origin;               // dev (localhost o IP)
+ const redirect =
+  import.meta.env.PROD
+    ? "https://wedding-admin-gamma.vercel.app"
+    : window.location.origin;
+           // dev (localhost o IP)
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
